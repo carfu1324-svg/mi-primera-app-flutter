@@ -1,0 +1,26 @@
+[
+  {
+    "id": "rojo_1",
+    "numero": 1,
+    "titulo": "Santo, Santo, Santo",
+    "categoria": "Rojo",
+    "letra": "¡Santo! ¡Santo! ¡Santo!\nSeñor Omnipotente,\nSiempre el labio mío\nLoores te dará.\n\n¡Santo! ¡Santo! ¡Santo!\nTe adoro reverente,\nDios en tres personas,\nBendita Trinidad.",
+    "acordes": "C F C\nSanto Santo Santo..."
+  },
+  {
+    "id": "verde_45",
+    "numero": 45,
+    "titulo": "Cuan Grande es Él",
+    "categoria": "Verde",
+    "letra": "Señor, mi Dios,\nAl contemplar los cielos,\nEl firmamento y las estrellas mil.\n\nAl oír tu voz\nEn los potentes truenos...",
+    "acordes": null
+  },
+  {
+    "id": "esp_01",
+    "numero": 101,
+    "titulo": "Himno de Jóvenes",
+    "categoria": "Especiales",
+    "letra": "Somos los jóvenes de hoy,\nLlevando la luz de la verdad...",
+    "acordes": "G D Em C"
+  }
+]
