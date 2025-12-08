@@ -3,6 +3,7 @@ import 'package:provider/provider.dart'; // Necesario
 // Imports de tus archivos
 import 'providers/himnos_provider.dart';
 import 'screens/home_screen.dart'; 
+import 'providers/ui_provider.dart';
 
 void main() {
   runApp(const EstadoDeLaApp());
@@ -20,6 +21,7 @@ class EstadoDeLaApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => HimnosProvider()),
         
         // (Próximamente aquí pondremos el UiProvider)
+        ChangeNotifierProvider(create: (_) => UiProvider()),
       ],
       child: const MiHimnarioApp(),
     );
