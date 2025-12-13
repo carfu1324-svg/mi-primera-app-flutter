@@ -4,21 +4,40 @@ import 'package:provider/provider.dart';
 import '../models/himno.dart';
 import '../providers/ui_provider.dart';
 import '../providers/himnos_provider.dart'; 
+import 'package:share_plus/share_plus.dart'; // <--- AGREGAR ESTO
 
 class DetalleScreen extends StatelessWidget {
   final Himno himno;
 
   const DetalleScreen({super.key, required this.himno});
 
+  void _compartirHimno(BuildContext context) {
+    final String textoACompartir = 
+        "🎵 *${himno.numero}. ${himno.titulo}*\n\n"
+        "${himno.letra}\n\n"
+        "_Enviado desde mi App de Himnario_";
+
+    final box = context.findRenderObject() as RenderBox?;
+    
+    Share.share(
+      textoACompartir,
+      subject: "Himno: ${himno.titulo}",
+      sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final uiProvider = context.watch<UiProvider>();
     
     // Obtenemos la lista actual
-    final himnosProvider = context.read<HimnosProvider>();
+    final himnosProvider = context.watch<HimnosProvider>(); 
+
     final listaActual = himnosProvider.himnos;
     final indiceActual = listaActual.indexOf(himno);
     
+    final esFavorito = himnosProvider.esFavorito(himno.id);
+
     // --- LÓGICA DE NAVEGACIÓN ---
     final haySiguiente = indiceActual < listaActual.length - 1;
     final hayAnterior = indiceActual > 0; // ¿Es mayor a 0? Entonces hay uno antes.
@@ -33,6 +52,23 @@ class DetalleScreen extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
+
+          IconButton(
+            icon: Icon(
+              esFavorito ? Icons.favorite : Icons.favorite_border,
+              color: esFavorito ? Colors.redAccent : null,
+            ),
+            onPressed: () {
+              context.read<HimnosProvider>().toggleFavorito(himno.id);
+            },
+          ),
+
+          IconButton(
+            icon: const Icon(Icons.share),
+            tooltip: 'Compartir letra',
+            onPressed: () => _compartirHimno(context),
+          ),
+
           IconButton(
             icon: Icon(
               Icons.music_note, 

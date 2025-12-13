@@ -1,48 +1,63 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // Necesario
-// Imports de tus archivos
+import 'package:provider/provider.dart';
 import 'providers/himnos_provider.dart';
-import 'screens/home_screen.dart'; 
 import 'providers/ui_provider.dart';
+import 'screens/home_screen.dart';
 
 void main() {
-  runApp(const EstadoDeLaApp());
-}
-
-// 1. Widget intermedio para manejar los Providers
-class EstadoDeLaApp extends StatelessWidget {
-  const EstadoDeLaApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MultiProvider(
+  runApp(
+    MultiProvider(
       providers: [
-        // Aquí registramos nuestro cerebro de Himnos
         ChangeNotifierProvider(create: (_) => HimnosProvider()),
-        
-        // (Próximamente aquí pondremos el UiProvider)
         ChangeNotifierProvider(create: (_) => UiProvider()),
       ],
-      child: const MiHimnarioApp(),
-    );
-  }
+      child: const MainApp(),
+    ),
+  );
 }
 
-// 2. Tu App real
-class MiHimnarioApp extends StatelessWidget {
-  const MiHimnarioApp({super.key});
+class MainApp extends StatelessWidget {
+  const MainApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Escuchamos al UiProvider para saber si cambiar el color
+    final uiProvider = context.watch<UiProvider>();
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Himnario App',
+      
+      // TEMA CLARO (LIGHT)
       theme: ThemeData(
-        primarySwatch: Colors.indigo,
         useMaterial3: true,
+        brightness: Brightness.light,
+        colorSchemeSeed: Colors.indigo, // Color base
+        scaffoldBackgroundColor: Colors.white,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.indigo,
+          foregroundColor: Colors.white, // Texto blanco en barra azul
+          elevation: 2,
+        ),
       ),
-      // 3. Definimos la pantalla de inicio (que crearemos en el sig. paso)
-      home: const HomeScreen(), 
+
+      // TEMA OSCURO (DARK)
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        colorSchemeSeed: Colors.indigo, // Mantenemos el toque azul
+        scaffoldBackgroundColor: const Color(0xFF121212), // Negro suave
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.grey[900],
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
+      ),
+
+      // Aquí decidimos cuál usar según el interruptor
+      themeMode: uiProvider.modoOscuro ? ThemeMode.dark : ThemeMode.light,
+      
+      home: const HomeScreen(),
     );
   }
 }

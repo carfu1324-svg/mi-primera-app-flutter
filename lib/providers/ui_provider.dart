@@ -73,4 +73,12 @@ class UiProvider extends ChangeNotifier {
     _guardarPreferencias(); // <--- Guardamos cada cambio
     notifyListeners();
   }
+
+  bool _modoOscuro = false; // Empieza en modo claro
+  bool get modoOscuro => _modoOscuro;
+
+  void alternarTema() {
+    _modoOscuro = !_modoOscuro; // Cambia de true a false y viceversa
+    notifyListeners();
+  }
 }

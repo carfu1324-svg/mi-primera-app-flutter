@@ -378,7 +378,7 @@
   {
     "id": "verde_48",
     "numero": 48,
-    "titulo": "Tiene Que Saber",
+    "titulo": "Tienen Que Saber",
     "categoria": "Verde",
     "letra": "1\nCada día puedo ver, en sus ojos el sufrir\nGente llena de dolor, y sin rumbo aquí\nEn angustia y soledad, llenos de temor\nRisa esconde su aflicción, sólo cristo ve.\n\n2\nTienen que saber, del amor de Dios\nEn las pruebas y el temor, el refugio da,\nTienen que saber, del amor de Dios\nQue en El hay salvación, tienen que saber.\n\n3\nÉl nos llama a brillar, en un mundo de confusión\nNadad iguala el llevar, vida a quien perdido está\nPor su amor podemos ver, que sufriendo están\nEllos tienen que oír, debemos compartir\n\n4\nTienen que saber, del amor de Dios\nEn las pruebas y el temor, el refugio da,\nTienen que saber del amor de Dios\nDebemos proclamar y nuestras vidas dar\n//Tienen que saber//",
     "acordes": "C, Am, Dm, G"
@@ -1034,7 +1034,7 @@
   {
     "id": "especiales_7",
     "numero": 7,
-    "titulo": "Que Grande Amor",
+    "titulo": "No soy yo, Sino Cristo en Mi",
     "categoria": "Especiales",
     "letra": "1\nQue grande amor y redención es Cristo\nNo hay nada más que el cielo pueda dar\nMi rectitud, mi libertad y gozo\nMi gracia es Él mi eterna y dulce paz\nMe aferro a Él, Jesús es mi esperanza\nVivo en Él, por siempre suyo soy.\nAsombroso es cantar mío es en verdad\nNo soy yo, sino en Cristo en mí.\n\n2\nTinieblas hay más no soy olvidado\nPues junto a mí el Salvador está\nSi débil soy gozoso en el avanzo\nPues su poder en mi se mostrará\nMe aferro a Él es mi pastor y escudo\nPor profundos valles me guiará\nÉl la noche venció, su victoria me dio\nNo soy yo sino Cristo en mí.\n\n3\nNo temeré he sido perdonado\nSeguro estoy el precio Él ya pagó\nSu sangre dio sufrió por mis pecados\nResucitó la muerte derrotó\nMe aferro a Él ya no soy condenado\nEs Jesús mi fiel intercesor\nLas cadenas rompió libertad me otorgó\nNo soy yo, sino Cristo en mí.\n\n4\nQuiero seguir a Cristo mientras viva\nPues prometió llevarme hasta su hogar\nEstando aquí, renueva Él mi vida\nHasta llegar al gozo eternal.\nMe aferro a Él, mi única esperanza.\nA Jesús la gloria y el honor.\nCuando llegue al final estos labios dirán,\nNo soy yo, sino Cristo en mí.\nCuando llegue al final estos labios dirán\nNo soy yo, sino Cristo en mí.\nNo soy yo, sino Cristo en mí.",
     "acordes": ""
@@ -1056,6 +1056,14 @@
     "acordes": ""
   },
   {
+    "id": "especiales_10",
+    "numero": 10,
+    "titulo": "Buscas",
+    "categoria": "Especiales",
+    "letra": "1\nBuscas \nCorazones que no teman ir\nAl campo de batalla\nBuscas\nVidas dedicadas a servir\nQue amen Tu palabra\nBuscas luces en la oscuridad\nQue no tengan miedo de brillar.\n\n                              Coro\nPorque la mies en verdad es mucha\nY no tengo excusas, para decir no,\nSi me llamaste a ser... ése que Tú buscas, \nque no tiene dudas de la decisión\nDe entregar completo el corazón a Tu labor.(bis al final)\n\n2\nBuscas\nA los que se entregan de verdad, y no a los mejores\nBuscas\nA los que el talento que les das\nLo emplean en tu obra\nBuscas luces en la oscuridad\nQue no tengan miedo de brillar.",
+    "acordes": ""
+  },
+  {
     "id": "ninos_1",
     "numero": 1,
     "titulo": "Los Hijos de Jacob",
@@ -1064,7 +1072,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_2",
     "numero": 2,
     "titulo": "Solo Necesito",
     "categoria": "Niños",
@@ -1072,7 +1080,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_3",
     "numero": 3,
     "titulo": "Las Flores",
     "categoria": "Niños",
@@ -1080,7 +1088,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_4",
     "numero": 4,
     "titulo": "Alrededor de Jericó",
     "categoria": "Niños",
@@ -1088,7 +1096,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_5",
     "numero": 5,
     "titulo": "Sadrac, Mesac y Abednego",
     "categoria": "Niños",
@@ -1096,7 +1104,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_6",
     "numero": 6,
     "titulo": "Milagros de Eliseo",
     "categoria": "Niños",
@@ -1104,7 +1112,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_7",
     "numero": 7,
     "titulo": "David",
     "categoria": "Niños",
@@ -1112,7 +1120,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_8",
     "numero": 8,
     "titulo": "Dad con Alegría",
     "categoria": "Niños",
@@ -1120,7 +1128,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_9",
     "numero": 9,
     "titulo": "A Campamento Voy",
     "categoria": "Niños",
@@ -1128,7 +1136,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_10",
     "numero": 10,
     "titulo": "¿Cómo Atravesó Moisés el Mar Rojo?",
     "categoria": "Niños",
@@ -1136,7 +1144,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_11",
     "numero": 11,
     "titulo": "Jesús nos Llama",
     "categoria": "Niños",
@@ -1144,7 +1152,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_12",
     "numero": 12,
     "titulo": "Gedeón Tenia al Señor",
     "categoria": "Niños",
@@ -1152,7 +1160,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_13",
     "numero": 13,
     "titulo": "Jonás",
     "categoria": "Niños",
@@ -1160,7 +1168,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_14",
     "numero": 14,
     "titulo": "Jonás no Hiso Caso",
     "categoria": "Niños",
@@ -1168,7 +1176,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_15",
     "numero": 15,
     "titulo": "Avivando el Fuego",
     "categoria": "Niños",
@@ -1176,7 +1184,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_16",
     "numero": 16,
     "titulo": "Esta Lucecita Mia",
     "categoria": "Niños",
@@ -1184,7 +1192,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_17",
     "numero": 17,
     "titulo": "Jesús Entra en Mi Corazón",
     "categoria": "Niños",
@@ -1192,7 +1200,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_18",
     "numero": 18,
     "titulo": "Santo Espíritu",
     "categoria": "Niños",
@@ -1200,7 +1208,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_19",
     "numero": 19,
     "titulo": "Somos Soldaditos",
     "categoria": "Niños",
@@ -1208,7 +1216,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_20",
     "numero": 20,
     "titulo": "Zaqueo",
     "categoria": "Niños",
@@ -1216,7 +1224,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_21",
     "numero": 21,
     "titulo": "Daniel",
     "categoria": "Niños",
@@ -1224,7 +1232,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_22",
     "numero": 22,
     "titulo": "Cristo nos Manda",
     "categoria": "Niños",
@@ -1232,7 +1240,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_23",
     "numero": 23,
     "titulo": "Guarda Tu Lengua del Mal",
     "categoria": "Niños",
@@ -1240,7 +1248,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_24",
     "numero": 24,
     "titulo": "Lee Tu Biblia",
     "categoria": "Niños",
@@ -1248,7 +1256,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_25",
     "numero": 25,
     "titulo": "Mi Dios es Tan Grande",
     "categoria": "Niños",
@@ -1256,7 +1264,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_26",
     "numero": 26,
     "titulo": "Estamos Construyendo",
     "categoria": "Niños",
@@ -1264,7 +1272,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_27",
     "numero": 27,
     "titulo": "Dos Estarán",
     "categoria": "Niños",
@@ -1272,7 +1280,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_28",
     "numero": 28,
     "titulo": "Los Pajarillos",
     "categoria": "Niños",
@@ -1280,7 +1288,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_29",
     "numero": 29,
     "titulo": "El Arca de Noé",
     "categoria": "Niños",
@@ -1288,7 +1296,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_30",
     "numero": 30,
     "titulo": "Noé",
     "categoria": "Niños",
@@ -1296,7 +1304,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_31",
     "numero": 31,
     "titulo": "Yo te Alabo de Corazón",
     "categoria": "Niños",
@@ -1304,7 +1312,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_32",
     "numero": 32,
     "titulo": "Yo Tengo un Amigo",
     "categoria": "Niños",
@@ -1312,7 +1320,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_33",
     "numero": 33,
     "titulo": "Si el Diablo Viene",
     "categoria": "Niños",
@@ -1320,7 +1328,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_34",
     "numero": 34,
     "titulo": "Santa Biblia",
     "categoria": "Niños",
@@ -1328,7 +1336,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_35",
     "numero": 35,
     "titulo": "Cristo Ama a los Niños",
     "categoria": "Niños",
@@ -1336,7 +1344,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_36",
     "numero": 36,
     "titulo": "Cuidadito los Ojitos",
     "categoria": "Niños",
@@ -1344,7 +1352,7 @@
     "acordes": ""
   },
   {
-    "id": "",
+    "id": "ninos_37",
     "numero": 37,
     "titulo": "Las Avecillas del Campo",
     "categoria": "Niños",
