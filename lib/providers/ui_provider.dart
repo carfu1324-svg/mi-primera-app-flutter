@@ -1,26 +1,51 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // <--- Importante
 
 class UiProvider extends ChangeNotifier {
+  // Valores por defecto
   double _tamanoLetra = 18.0;
   bool _mostrarAcordes = false;
-  
-  // 1. NUEVAS VARIABLES PARA FUENTE
-  int _indiceFuente = 0; // Para saber en cuál de la lista vamos
+  int _indiceFuente = 0;
   final List<String> _listaFuentes = ['Lato', 'Merriweather', 'Dancing Script'];
-  // Lato: Moderna y limpia
-  // Merriweather: Clásica de libro (con serifa)
-  // Dancing Script: Elegante / Manuscrita
 
   // Getters
   double get tamanoLetra => _tamanoLetra;
   bool get mostrarAcordes => _mostrarAcordes;
-  String get fuenteActual => _listaFuentes[_indiceFuente]; // Devuelve el nombre actual
+  String get fuenteActual => _listaFuentes[_indiceFuente];
 
-  // ... (Tus funciones de aumentar/disminuir letra y acordes siguen aquí igual) ...
+  // CONSTRUCTOR: Cargar memoria al iniciar
+  UiProvider() {
+    _cargarPreferencias();
+  }
+
+  // --- 1. FUNCIÓN PARA CARGAR (LEER) ---
+  Future<void> _cargarPreferencias() async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    // Leemos o usamos el valor por defecto si no existe
+    _tamanoLetra = prefs.getDouble('tamanoLetra') ?? 18.0;
+    _mostrarAcordes = prefs.getBool('mostrarAcordes') ?? false;
+    _indiceFuente = prefs.getInt('indiceFuente') ?? 0;
+    
+    notifyListeners(); // Actualizamos la UI con los datos guardados
+  }
+
+  // --- 2. FUNCIÓN PARA GUARDAR (ESCRIBIR) ---
+  Future<void> _guardarPreferencias() async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    prefs.setDouble('tamanoLetra', _tamanoLetra);
+    prefs.setBool('mostrarAcordes', _mostrarAcordes);
+    prefs.setInt('indiceFuente', _indiceFuente);
+    // Nota: No necesitamos notifyListeners() aquí porque ya se llamó al cambiar el valor
+  }
+
+  // --- FUNCIONES LÓGICAS (Modificadas para guardar) ---
 
   void aumentarLetra() {
-    if (_tamanoLetra < 40.0) { // Subí el límite a 40 para que se note más
+    if (_tamanoLetra < 40.0) {
       _tamanoLetra += 2.0;
+      _guardarPreferencias(); // <--- Guardamos cada cambio
       notifyListeners();
     }
   }
@@ -28,23 +53,24 @@ class UiProvider extends ChangeNotifier {
   void disminuirLetra() {
     if (_tamanoLetra > 12.0) {
       _tamanoLetra -= 2.0;
+      _guardarPreferencias(); // <--- Guardamos cada cambio
       notifyListeners();
     }
   }
 
   void toggleAcordes() {
     _mostrarAcordes = !_mostrarAcordes;
+    _guardarPreferencias(); // <--- Guardamos cada cambio
     notifyListeners();
   }
 
-  // 2. NUEVA FUNCIÓN: CAMBIAR FUENTE
   void cambiarFuente() {
-    // Ciclo: 0 -> 1 -> 2 -> 0 ...
     if (_indiceFuente < _listaFuentes.length - 1) {
       _indiceFuente++;
     } else {
-      _indiceFuente = 0; // Vuelve al principio
+      _indiceFuente = 0;
     }
+    _guardarPreferencias(); // <--- Guardamos cada cambio
     notifyListeners();
   }
 }

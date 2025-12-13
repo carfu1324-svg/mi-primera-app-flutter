@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart'; // <--- IMPORTANTE
+// import 'package:google_fonts/google_fonts.dart'; 
 import '../models/himno.dart';
 import '../providers/ui_provider.dart';
+import '../providers/himnos_provider.dart'; 
 
 class DetalleScreen extends StatelessWidget {
   final Himno himno;
@@ -12,13 +13,25 @@ class DetalleScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final uiProvider = context.watch<UiProvider>();
+    
+    // Obtenemos la lista actual
+    final himnosProvider = context.read<HimnosProvider>();
+    final listaActual = himnosProvider.himnos;
+    final indiceActual = listaActual.indexOf(himno);
+    
+    // --- LÓGICA DE NAVEGACIÓN ---
+    final haySiguiente = indiceActual < listaActual.length - 1;
+    final hayAnterior = indiceActual > 0; // ¿Es mayor a 0? Entonces hay uno antes.
 
     return Scaffold(
-      // Fondo un poco crema para que parezca papel (opcional, ayuda a la vista)
-      backgroundColor: Colors.orange[50], 
+      backgroundColor: Colors.orange[50],
       
       appBar: AppBar(
-        title: Text("Himno #${himno.numero}"),
+        title: Text(
+          "${himno.numero}. ${himno.titulo}",
+          style: const TextStyle(fontSize: 18),
+          overflow: TextOverflow.ellipsis,
+        ),
         actions: [
           IconButton(
             icon: Icon(
@@ -29,22 +42,23 @@ class DetalleScreen extends StatelessWidget {
           ),
         ],
       ),
+      
       body: Stack(
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
             child: SingleChildScrollView(
               child: SizedBox(
-                width: double.infinity, // Ocupar todo el ancho para poder centrar
+                width: double.infinity,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center, // 1. CENTRAR COLUMNA
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // TÍTULO
                     Text(
                       himno.titulo,
-                      textAlign: TextAlign.center, // 2. CENTRAR TEXTO
-                      style: GoogleFonts.getFont(
-                        uiProvider.fuenteActual, // 3. FUENTE DINÁMICA
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: uiProvider.fuenteActual,
                         fontSize: uiProvider.tamanoLetra + 6,
                         fontWeight: FontWeight.bold,
                         color: Colors.indigo[900],
@@ -65,7 +79,7 @@ class DetalleScreen extends StatelessWidget {
                         child: Text(
                           "🎸 ${himno.acordes}",
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.robotoMono( // Los acordes siempre en letra monoespaciada
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: Colors.brown,
@@ -76,60 +90,110 @@ class DetalleScreen extends StatelessWidget {
                     // LETRA
                     Text(
                       himno.letra,
-                      textAlign: TextAlign.center, // 2. CENTRAR TEXTO
-                      style: GoogleFonts.getFont(
-                        uiProvider.fuenteActual, // 3. FUENTE DINÁMICA
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: uiProvider.fuenteActual,
                         fontSize: uiProvider.tamanoLetra,
-                        height: 1.6, // Altura de línea para elegancia
+                        height: 1.6,
                         color: Colors.black87,
                       ),
                     ),
                     
-                    const SizedBox(height: 120), // Espacio final
+                    const SizedBox(height: 40),
+
+                    // --- BARRA DE NAVEGACIÓN (ANTERIOR / SIGUIENTE) ---
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 100.0), // Espacio para la barra flotante
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly, // Espaciados equitativamente
+                        children: [
+                          
+                          // 1. BOTÓN ANTERIOR
+                          if (hayAnterior)
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                final anteriorHimno = listaActual[indiceActual - 1];
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => DetalleScreen(himno: anteriorHimno),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.skip_previous),
+                              label: const Text("Anterior"),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: Colors.indigo,
+                              ),
+                            )
+                          else
+                            // Espacio invisible para mantener el diseño si no hay botón
+                            const SizedBox(width: 100), 
+
+                          // 2. BOTÓN SIGUIENTE
+                          if (haySiguiente)
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                final siguienteHimno = listaActual[indiceActual + 1];
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => DetalleScreen(himno: siguienteHimno),
+                                  ),
+                                );
+                              },
+                              // Invertimos el orden (Texto - Icono) para que la flecha apunte a la derecha
+                              icon: const Icon(Icons.skip_next), 
+                              label: const Text("Siguiente"),
+                              // Un truco para poner el icono a la derecha del texto:
+                              // Flutter por defecto pone el icono a la izquierda.
+                              // No te preocupes, se entiende bien así, o puedes usar Directionality.
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.indigo, // Color destacado para "Siguiente"
+                                foregroundColor: Colors.white,
+                              ),
+                            )
+                          else
+                             const SizedBox(width: 100),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
           ),
 
-          // BARRA FLOTANTE MEJORADA
+          // BARRA FLOTANTE DE UI (Igual que siempre)
           Positioned(
             bottom: 30,
-            left: 20, // Centramos la barra un poco mejor
+            left: 20,
             right: 20,
             child: Center(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: Colors.indigo, // Barra oscura para contraste
+                  color: Colors.indigo,
                   borderRadius: BorderRadius.circular(50),
                   boxShadow: [const BoxShadow(blurRadius: 10, color: Colors.black45)],
                 ),
                 child: Row(
-                  mainAxisSize: MainAxisSize.min, // Que la barra se ajuste al contenido
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Botón Fuente
                     IconButton(
                       icon: const Icon(Icons.font_download, color: Colors.white),
-                      tooltip: "Cambiar Fuente",
                       onPressed: () => context.read<UiProvider>().cambiarFuente(),
                     ),
-                    
-                    Container(height: 20, width: 1, color: Colors.white30), // Divisor
-
-                    // Disminuir
+                    Container(height: 20, width: 1, color: Colors.white30),
                     IconButton(
                       icon: const Icon(Icons.remove, color: Colors.white),
                       onPressed: () => context.read<UiProvider>().disminuirLetra(),
                     ),
-                    
-                    // Indicador numérico
                     Text(
                       "${uiProvider.tamanoLetra.toInt()}",
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                     ),
-
-                    // Aumentar
                     IconButton(
                       icon: const Icon(Icons.add, color: Colors.white),
                       onPressed: () => context.read<UiProvider>().aumentarLetra(),
