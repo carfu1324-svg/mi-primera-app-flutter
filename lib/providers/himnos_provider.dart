@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io'; // Para guardar archivos en el celular
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle; // Para leer el asset original
-import 'package:shared_preferences/shared_preferences.dart'; // <--- AGREGAR
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http; // Para descargar de internet
 import 'package:path_provider/path_provider.dart'; // Para encontrar la ruta
 import 'dart:developer'; 
@@ -18,7 +18,6 @@ class HimnosProvider extends ChangeNotifier {
   bool _cargando = true;
 
   // --- CONFIGURACIÓN DE ACTUALIZACIÓN ---
-  // PEGA AQUÍ TU ENLACE CORTO (El que termina en /raw/himnos.json)
   static const String _urlGist = "https://gist.githubusercontent.com/carfu1324-svg/5465e889e4ed18b75d29acf9c812c718/raw/himnos.json";
   static const String _nombreArchivoLocal = "himnos_local_v1.json";
 
@@ -32,6 +31,27 @@ class HimnosProvider extends ChangeNotifier {
     log("Inicializando Provider Híbrido...", name: 'HimnosProvider');
     cargarDatosHibridos();
   }
+
+  // ==========================================================
+  //  NUEVO: FUNCIÓN PARA EL BOTÓN "ACTUALIZAR"
+  // ==========================================================
+  Future<bool> recargarLista() async {
+    _cargando = true;
+    notifyListeners(); // Muestra spinner si quieres
+
+    // Llamamos a la nube forzando la actualización en memoria visual
+    bool exito = await _buscarActualizacionesEnNube(aplicarCambiosVisuales: true);
+    
+    // Si falló la descarga, al menos volvemos a mostrar lo que ya teníamos
+    if (!exito) {
+      _cargando = false;
+      notifyListeners();
+    }
+    
+    return exito; // Retorna true o false para mostrar el SnackBar en la pantalla
+  }
+  // ==========================================================
+
 
   // 1. EL CEREBRO DE CARGA
   Future<void> cargarDatosHibridos() async {
@@ -56,11 +76,11 @@ class HimnosProvider extends ChangeNotifier {
       _procesarJson(jsonString);
 
       // PASO C: (Silencioso) Buscar actualizaciones en internet
-      _buscarActualizacionesEnNube();
+      // Aquí NO aplicamos cambios visuales inmediatos para no asustar al usuario que acaba de entrar
+      _buscarActualizacionesEnNube(aplicarCambiosVisuales: false);
 
     } catch (e) {
       log("Error crítico cargando datos", name: 'HimnosProvider', error: e);
-      // Si todo falla, intentamos emergencia con assets
       await _cargarDesdeAssetsEmergencia();
     }
   }
@@ -80,7 +100,7 @@ class HimnosProvider extends ChangeNotifier {
 
       // Extraer categorías únicas
       final categoriasUnicas = _himnosOriginales.map((h) => h.categoria).toSet().toList();
-      _categorias = ["Todos", "Favoritos", ...categoriasUnicas]; // Mantenemos "Todos" primero
+      _categorias = ["Todos", "Favoritos", ...categoriasUnicas];
 
       _cargando = false;
       notifyListeners();
@@ -89,37 +109,43 @@ class HimnosProvider extends ChangeNotifier {
     }
   }
 
-  // 3. ACTUALIZACIÓN DESDE INTERNET (OTA)
-  Future<void> _buscarActualizacionesEnNube() async {
+  // 3. ACTUALIZACIÓN DESDE INTERNET (CON TRUCO ANTI-CACHÉ)
+  Future<bool> _buscarActualizacionesEnNube({required bool aplicarCambiosVisuales}) async {
     try {
       log("Buscando actualizaciones en Gist...", name: 'HimnosProvider');
-      final respuesta = await http.get(Uri.parse(_urlGist));
+      
+      // --- EL TRUCO DEL TIMESTAMP ---
+      // Agregamos ?v=1234567 al final de la URL. 
+      // El servidor ignora esto, pero el celular cree que es una página nueva y descarga de nuevo.
+      final String urlSinCache = "$_urlGist?v=${DateTime.now().millisecondsSinceEpoch}";
+      
+      final respuesta = await http.get(Uri.parse(urlSinCache));
 
       if (respuesta.statusCode == 200) {
         final contenidoNube = respuesta.body;
 
-        // VERIFICACIÓN DE SEGURIDAD: ¿Es un JSON válido?
-        // Intentamos decodificarlo solo para ver si no está roto
+        // VERIFICACIÓN DE SEGURIDAD
         json.decode(contenidoNube); 
 
-        // Si llegó hasta aquí, el JSON es válido. Lo guardamos.
+        // Guardar en disco
         final directorio = await getApplicationDocumentsDirectory();
         final archivoLocal = File('${directorio.path}/$_nombreArchivoLocal');
-        
-        // Comparamos si es diferente a lo que ya tenemos para no guardar por gusto
-        // (Opcional, por ahora guardamos siempre para asegurar la última versión)
         await archivoLocal.writeAsString(contenidoNube);
-        log("¡Himnos actualizados y guardados en el celular!", name: 'HimnosProvider');
+        log("¡Himnos actualizados y guardados!", name: 'HimnosProvider');
         
-        // OPCIONAL: Podríamos recargar la lista en vivo aquí llamando a _procesarJson(contenidoNube)
-        // Pero mejor dejamos que se aplique la próxima vez que abra la app para no moverle la pantalla al usuario.
+        // Si el usuario presionó el botón manual, actualizamos la lista YA MISMO.
+        if (aplicarCambiosVisuales) {
+           _procesarJson(contenidoNube);
+        }
         
+        return true; // Éxito
       } else {
         log("Error conectando con Gist: ${respuesta.statusCode}", name: 'HimnosProvider');
+        return false; // Fallo
       }
     } catch (e) {
-      // Si no hay internet o falla algo, no pasa nada. El usuario sigue feliz con su versión local.
-      log("No se pudo actualizar (probablemente sin internet)", name: 'HimnosProvider');
+      log("No se pudo actualizar (sin internet)", name: 'HimnosProvider');
+      return false; // Fallo
     }
   }
 
@@ -129,14 +155,13 @@ class HimnosProvider extends ChangeNotifier {
     _procesarJson(jsonString);
   }
 
-  // --- LÓGICA DE FILTRADO (Igual que antes) ---
+  // --- LÓGICA DE FILTRADO ---
   void seleccionarCategoria(String categoria) {
     _categoriaSeleccionada = categoria;
     if (categoria == "Todos") {
       _himnosFiltrados = List.from(_himnosOriginales);
     } 
     else if (categoria == "Favoritos") {
-      // NUEVO: Filtra solo los que están en la lista de favoritos
       _himnosFiltrados = _himnosOriginales
           .where((h) => _idsFavoritos.contains(h.id))
           .toList();
@@ -147,15 +172,13 @@ class HimnosProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- BUSCADOR PROFUNDO (TÍTULO + NÚMERO + LETRA) ---
+  // --- BUSCADOR ---
   void buscar(String query) {
-    // 1. Definir dónde vamos a buscar (Todos o Categoría específica)
     List<Himno> baseDeBusqueda;
     if (_categoriaSeleccionada == "Todos") {
       baseDeBusqueda = _himnosOriginales;
     } 
     else if (_categoriaSeleccionada == "Favoritos") {
-      // Si estamos en Favoritos, la base son solo los que tienen corazón
       baseDeBusqueda = _himnosOriginales
           .where((h) => _idsFavoritos.contains(h.id))
           .toList();
@@ -164,7 +187,6 @@ class HimnosProvider extends ChangeNotifier {
       baseDeBusqueda = _himnosOriginales.where((h) => h.categoria == _categoriaSeleccionada).toList();
     }
 
-    // 2. Si no escribe nada, mostramos todo lo de esa categoría
     if (query.isEmpty) {
       _himnosFiltrados = baseDeBusqueda;
       notifyListeners();
@@ -173,27 +195,17 @@ class HimnosProvider extends ChangeNotifier {
 
     final consulta = query.toLowerCase();
     
-    // 3. FILTRADO INTELIGENTE
     _himnosFiltrados = baseDeBusqueda.where((himno) {
-      // A. ¿Coincide el número?
       final coincideNumero = himno.numero.toString().startsWith(consulta);
-      
-      // B. ¿Coincide el título?
       final coincideTitulo = himno.titulo.toLowerCase().contains(consulta);
-      
-      // C. ¿Coincide la letra? (NUEVO)
-      // Quitamos saltos de línea para buscar mejor
       final coincideLetra = himno.letra.toLowerCase().contains(consulta);
-
-      // Si cumple CUALQUIERA de las 3 condiciones, pasa el filtro
       return coincideNumero || coincideTitulo || coincideLetra;
     }).toList();
 
     notifyListeners();
   }
 
-  // --- LÓGICA DE FAVORITOS (PEGAR AL FINAL) ---
-  
+  // --- LÓGICA DE FAVORITOS ---
   bool esFavorito(String id) {
     return _idsFavoritos.contains(id);
   }
@@ -209,7 +221,6 @@ class HimnosProvider extends ChangeNotifier {
     
     await prefs.setStringList('lista_favoritos', _idsFavoritos);
     
-    // Si estamos viendo la lista de favoritos, actualizamos la pantalla
     if (_categoriaSeleccionada == "Favoritos") {
       seleccionarCategoria("Favoritos");
     }

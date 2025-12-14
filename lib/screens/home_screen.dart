@@ -52,6 +52,24 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('Himnario'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: "Actualizar lista",
+            onPressed: () async {
+              // Muestra un mensajito abajo (SnackBar)
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Actualizando himnos...")),
+              );
+              
+              // Llama al provider
+              await context.read<HimnosProvider>().recargarLista();
+              
+              // Oculta el mensaje o muestra éxito
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("¡Lista actualizada!")),
+              );
+            },
+          ),
           // BOTÓN MODO OSCURO
           IconButton(
             icon: Icon(
@@ -87,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   : null,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 filled: true,
-                fillColor: Colors.grey[100],
+                fillColor: Color(0xFFE8D5D5), //Color de Fondo Barra de busqueda
                 contentPadding: const EdgeInsets.symmetric(vertical: 0),
               ),
               onChanged: (texto) {
@@ -111,7 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 
                 Color colorChip;
                 if (categoria == "Todos") {
-                  colorChip = Colors.indigo;
+                  colorChip = Color(0xFFA96565);
                 } else {
                   colorChip = _obtenerColorCategoria(categoria);
                 }

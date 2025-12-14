@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-// import 'package:google_fonts/google_fonts.dart'; 
+import 'package:share_plus/share_plus.dart';
 import '../models/himno.dart';
 import '../providers/ui_provider.dart';
-import '../providers/himnos_provider.dart'; 
-import 'package:share_plus/share_plus.dart'; // <--- AGREGAR ESTO
+import '../providers/himnos_provider.dart';
 
 class DetalleScreen extends StatelessWidget {
   final Himno himno;
@@ -29,179 +28,225 @@ class DetalleScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final uiProvider = context.watch<UiProvider>();
-    
-    // Obtenemos la lista actual
     final himnosProvider = context.watch<HimnosProvider>(); 
 
     final listaActual = himnosProvider.himnos;
     final indiceActual = listaActual.indexOf(himno);
-    
     final esFavorito = himnosProvider.esFavorito(himno.id);
 
     // --- LÓGICA DE NAVEGACIÓN ---
     final haySiguiente = indiceActual < listaActual.length - 1;
-    final hayAnterior = indiceActual > 0; // ¿Es mayor a 0? Entonces hay uno antes.
+    final hayAnterior = indiceActual > 0;
 
     return Scaffold(
-      backgroundColor: Colors.orange[50],
-      
-      appBar: AppBar(
-        title: Text(
-          "${himno.numero}. ${himno.titulo}",
-          style: const TextStyle(fontSize: 18),
-          overflow: TextOverflow.ellipsis,
-        ),
-        actions: [
-
-          IconButton(
-            icon: Icon(
-              esFavorito ? Icons.favorite : Icons.favorite_border,
-              color: esFavorito ? Colors.redAccent : null,
-            ),
-            onPressed: () {
-              context.read<HimnosProvider>().toggleFavorito(himno.id);
-            },
-          ),
-
-          IconButton(
-            icon: const Icon(Icons.share),
-            tooltip: 'Compartir letra',
-            onPressed: () => _compartirHimno(context),
-          ),
-
-          IconButton(
-            icon: Icon(
-              Icons.music_note, 
-              color: uiProvider.mostrarAcordes ? Colors.orange : Colors.grey
-            ),
-            onPressed: () => context.read<UiProvider>().toggleAcordes(),
-          ),
-        ],
-      ),
+      backgroundColor: Color(0xFFF7F0F0), // Fondo suave
+      // 1. ELIMINAMOS EL APPBAR DEL SCAFFOLD
+      // Esto quita la barra superior y el título duplicado.
       
       body: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
-            child: SingleChildScrollView(
-              child: SizedBox(
-                width: double.infinity,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // TÍTULO
-                    Text(
-                      himno.titulo,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: uiProvider.fuenteActual,
-                        fontSize: uiProvider.tamanoLetra + 6,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.indigo[900],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // ACORDES
-                    if (uiProvider.mostrarAcordes && himno.acordes != null)
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 20),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.orange),
-                        ),
-                        child: Text(
-                          "🎸 ${himno.acordes}",
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.brown,
-                          ),
-                        ),
+          // USAMOS SAFEAREA PARA RESPETAR LA BATERÍA/HORA DEL CELULAR
+          SafeArea(
+            child: Column(
+              children: [
+                
+                // ===============================================
+                // 2. CABECERA PERSONALIZADA (BOTONES)
+                // ===============================================
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // --- BOTÓN ATRÁS (IZQUIERDA) ---
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back_ios_new, size: 24, color: Colors.black87),
+                        onPressed: () => Navigator.pop(context),
                       ),
 
-                    // LETRA
-                    Text(
-                      himno.letra,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: uiProvider.fuenteActual,
-                        fontSize: uiProvider.tamanoLetra,
-                        height: 1.6,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 40),
-
-                    // --- BARRA DE NAVEGACIÓN (ANTERIOR / SIGUIENTE) ---
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 100.0), // Espacio para la barra flotante
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly, // Espaciados equitativamente
+                      // --- BOTONES DE ACCIÓN (DERECHA) ---
+                      Row(
                         children: [
+                          // Compartir
+                          IconButton(
+                            icon: const Icon(Icons.share_outlined, color: Colors.black87),
+                            tooltip: 'Compartir letra',
+                            onPressed: () => _compartirHimno(context),
+                          ),
                           
-                          // 1. BOTÓN ANTERIOR
-                          if (hayAnterior)
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                final anteriorHimno = listaActual[indiceActual - 1];
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => DetalleScreen(himno: anteriorHimno),
-                                  ),
-                                );
-                              },
-                              icon: const Icon(Icons.skip_previous),
-                              label: const Text("Anterior"),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: Colors.indigo,
-                              ),
-                            )
-                          else
-                            // Espacio invisible para mantener el diseño si no hay botón
-                            const SizedBox(width: 100), 
+                          // Notas (Solo visual por ahora)
+                          IconButton(
+                            icon: const Icon(Icons.edit_note, color: Colors.black87),
+                            tooltip: 'Notas personalizadas',
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Próximamente: Notas personales"))
+                              );
+                            },
+                          ),
 
-                          // 2. BOTÓN SIGUIENTE
-                          if (haySiguiente)
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                final siguienteHimno = listaActual[indiceActual + 1];
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => DetalleScreen(himno: siguienteHimno),
-                                  ),
-                                );
-                              },
-                              // Invertimos el orden (Texto - Icono) para que la flecha apunte a la derecha
-                              icon: const Icon(Icons.skip_next), 
-                              label: const Text("Siguiente"),
-                              // Un truco para poner el icono a la derecha del texto:
-                              // Flutter por defecto pone el icono a la izquierda.
-                              // No te preocupes, se entiende bien así, o puedes usar Directionality.
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.indigo, // Color destacado para "Siguiente"
-                                foregroundColor: Colors.white,
-                              ),
-                            )
-                          else
-                             const SizedBox(width: 100),
+                          // Acordes (Toggle)
+                          IconButton(
+                             icon: Icon(
+                               Icons.music_note, 
+                               color: uiProvider.mostrarAcordes ? Colors.orange[800] : Colors.grey
+                             ),
+                             onPressed: () => context.read<UiProvider>().toggleAcordes(),
+                          ),
+
+                          // Favorito
+                          IconButton(
+                            icon: Icon(
+                              esFavorito ? Icons.star : Icons.star_border,
+                              color: esFavorito ? Colors.red[400] : Colors.black87,
+                              size: 28,
+                            ),
+                            onPressed: () {
+                              context.read<HimnosProvider>().toggleFavorito(himno.id);
+                            },
+                          ),
                         ],
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
+
+                // ===============================================
+                // 3. CONTENIDO CON SCROLL (EXPANDED)
+                // ===============================================
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 30),
+                        
+                        // TÍTULO GRANDE (El único título visible)
+                        Text(
+                          "${himno.numero}. ${himno.titulo}",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: uiProvider.fuenteActual,
+                            fontSize: uiProvider.tamanoLetra + 6,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                            height: 1.2,
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 20),
+
+                        // CAJA DE ACORDES
+                        if (uiProvider.mostrarAcordes && himno.acordes != null)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 20),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.orange.withOpacity(0.5)),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.orange.withOpacity(0.1),
+                                  blurRadius: 5,
+                                  offset: const Offset(0, 2),
+                                )
+                              ]
+                            ),
+                            child: Text(
+                              "♫  ${himno.acordes}",
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.brown,
+                              ),
+                            ),
+                          ),
+
+                        // LETRA (TEXTO NORMAL, NO MARKDOWN)
+                        Text(
+                          himno.letra,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: uiProvider.fuenteActual,
+                            fontSize: uiProvider.tamanoLetra,
+                            height: 1.6,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 40),
+
+                        // --- BOTONES ANTERIOR / SIGUIENTE ---
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // ANTERIOR
+                            if (hayAnterior)
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  final anterior = listaActual[indiceActual - 1];
+                                  Navigator.pushReplacement(
+                                    context,
+                                    PageRouteBuilder(
+                                      pageBuilder: (_, __, ___) => DetalleScreen(himno: anterior),
+                                      transitionDuration: Duration.zero, // Transición instantánea
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.arrow_back_ios, size: 16),
+                                label: const Text("Anterior"),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFA96565),
+                                  foregroundColor: Colors.white,
+                                ),
+                              )
+                            else
+                              const SizedBox(width: 100), // Espacio vacío
+
+                            // SIGUIENTE
+                            if (haySiguiente)
+                              Directionality( // Truco para poner icono a la derecha
+                                textDirection: TextDirection.rtl,
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    final siguiente = listaActual[indiceActual + 1];
+                                    Navigator.pushReplacement(
+                                      context,
+                                      PageRouteBuilder(
+                                        pageBuilder: (_, __, ___) => DetalleScreen(himno: siguiente),
+                                        transitionDuration: Duration.zero,
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.arrow_back_ios, size: 16), // La flecha apunta a la izq en RTL, parece derecha
+                                  label: const Text("Siguiente"),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFA96565),
+                                    foregroundColor: Colors.white,
+                                  ),
+                                ),
+                              )
+                            else
+                              const SizedBox(width: 100),
+                          ],
+                        ),
+
+                        // Espacio extra para que la barra flotante no tape el texto final
+                        const SizedBox(height: 120),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
 
-          // BARRA FLOTANTE DE UI (Igual que siempre)
+          // ===============================================
+          // 4. BARRA FLOTANTE (FONT CONTROLS) - SIN CAMBIOS
+          // ===============================================
           Positioned(
             bottom: 30,
             left: 20,
@@ -210,9 +255,9 @@ class DetalleScreen extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: Colors.indigo,
+                  color: const Color(0xFFA96565),
                   borderRadius: BorderRadius.circular(50),
-                  boxShadow: [const BoxShadow(blurRadius: 10, color: Colors.black45)],
+                  boxShadow: [const BoxShadow(blurRadius: 10, color: Colors.black26)],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,

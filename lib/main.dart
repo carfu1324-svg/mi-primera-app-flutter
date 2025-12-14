@@ -33,9 +33,9 @@ class MainApp extends StatelessWidget {
         useMaterial3: true,
         brightness: Brightness.light,
         colorSchemeSeed: Colors.indigo, // Color base
-        scaffoldBackgroundColor: Colors.white,
+        scaffoldBackgroundColor: Color(0xFFF7F0F0),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.indigo,
+          backgroundColor: Color(0xFFA96565),
           foregroundColor: Colors.white, // Texto blanco en barra azul
           elevation: 2,
         ),
