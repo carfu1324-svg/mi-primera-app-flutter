@@ -128,14 +128,14 @@ class DetalleScreen extends StatelessWidget {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontFamily: uiProvider.fuenteActual,
-                            fontSize: uiProvider.tamanoLetra + 6,
+                            fontSize: 26.0,
                             fontWeight: FontWeight.bold,
                             color: Colors.black87,
                             height: 1.2,
                           ),
                         ),
                         
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 50),
 
                         // CAJA DE ACORDES
                         if (uiProvider.mostrarAcordes && himno.acordes != null)

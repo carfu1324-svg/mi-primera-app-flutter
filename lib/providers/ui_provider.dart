@@ -6,12 +6,14 @@ class UiProvider extends ChangeNotifier {
   double _tamanoLetra = 18.0;
   bool _mostrarAcordes = false;
   int _indiceFuente = 0;
+  bool _modoOscuro = false;
   final List<String> _listaFuentes = ['Lato', 'Merriweather', 'Dancing Script'];
 
   // Getters
   double get tamanoLetra => _tamanoLetra;
   bool get mostrarAcordes => _mostrarAcordes;
   String get fuenteActual => _listaFuentes[_indiceFuente];
+  bool get modoOscuro => _modoOscuro;
 
   // CONSTRUCTOR: Cargar memoria al iniciar
   UiProvider() {
@@ -26,7 +28,7 @@ class UiProvider extends ChangeNotifier {
     _tamanoLetra = prefs.getDouble('tamanoLetra') ?? 18.0;
     _mostrarAcordes = prefs.getBool('mostrarAcordes') ?? false;
     _indiceFuente = prefs.getInt('indiceFuente') ?? 0;
-    
+    _modoOscuro = prefs.getBool('modoOscuro') ?? false;
     notifyListeners(); // Actualizamos la UI con los datos guardados
   }
 
@@ -37,6 +39,7 @@ class UiProvider extends ChangeNotifier {
     prefs.setDouble('tamanoLetra', _tamanoLetra);
     prefs.setBool('mostrarAcordes', _mostrarAcordes);
     prefs.setInt('indiceFuente', _indiceFuente);
+    prefs.setBool('modoOscuro',_modoOscuro);
     // Nota: No necesitamos notifyListeners() aquí porque ya se llamó al cambiar el valor
   }
 
@@ -74,11 +77,18 @@ class UiProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool _modoOscuro = false; // Empieza en modo claro
-  bool get modoOscuro => _modoOscuro;
+  void temaDispositivo() {
+    _modoOscuro = !_modoOscuro;
+    _guardarPreferencias();
+    notifyListeners();
+  }
+
+ // bool _modoOscuro = false; // Empieza en modo claro
+ // bool get modoOscuro => _modoOscuro;
 
   void alternarTema() {
-    _modoOscuro = !_modoOscuro; // Cambia de true a false y viceversa
+    _modoOscuro = !_modoOscuro;
+    _guardarPreferencias(); // Cambia de true a false y viceversa
     notifyListeners();
   }
 }
