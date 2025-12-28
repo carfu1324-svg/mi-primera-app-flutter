@@ -11,13 +11,13 @@ class DetalleScreen extends StatelessWidget {
   const DetalleScreen({super.key, required this.himno});
 
   void _compartirHimno(BuildContext context) {
+    // ... (Tu lógica de compartir queda igual) ...
     final String textoACompartir = 
         "🎵 *${himno.numero}. ${himno.titulo}*\n\n"
         "${himno.letra}\n\n"
         "_Enviado desde mi App de Himnario_";
 
     final box = context.findRenderObject() as RenderBox?;
-    
     Share.share(
       textoACompartir,
       subject: "Himno: ${himno.titulo}",
@@ -30,58 +30,62 @@ class DetalleScreen extends StatelessWidget {
     final uiProvider = context.watch<UiProvider>();
     final himnosProvider = context.watch<HimnosProvider>(); 
 
-    final listaActual = himnosProvider.himnos;
+    // Detectamos si el tema actual es oscuro automáticamente
+    // gracias a tu configuración en main.dart
+    final esOscuro = Theme.of(context).brightness == Brightness.dark;
+
+    // Colores dinámicos para los acordes (que no son parte del tema estándar)
+    final colorFondoAcordes = esOscuro ? Colors.grey[850] : Colors.white;
+    final colorTextoAcordes = esOscuro ? Colors.orangeAccent : Colors.brown;
+    
+    // El color de texto principal lo tomamos del Tema
+    final colorTextoPrincipal = Theme.of(context).textTheme.bodyLarge?.color;
+
+    // ANTES: final listaActual = himnosProvider.himnos; (Esto usaba la búsqueda)
+    // AHORA: Usamos la lista completa de la categoría para respetar el orden 121, 122, 123...
+    final listaActual = himnosProvider.listaParaNavegacion;
     final indiceActual = listaActual.indexOf(himno);
     final esFavorito = himnosProvider.esFavorito(himno.id);
-
-    // --- LÓGICA DE NAVEGACIÓN ---
     final haySiguiente = indiceActual < listaActual.length - 1;
     final hayAnterior = indiceActual > 0;
 
     return Scaffold(
-      backgroundColor: Color(0xFFF7F0F0), // Fondo suave
-      // 1. ELIMINAMOS EL APPBAR DEL SCAFFOLD
-      // Esto quita la barra superior y el título duplicado.
+      // 1. IMPORTANTE: Al quitar backgroundColor, Flutter usa el de tu main.dart 
+      // (Negro suave en oscuro, F7F0F0 en claro).
       
       body: Stack(
         children: [
-          // USAMOS SAFEAREA PARA RESPETAR LA BATERÍA/HORA DEL CELULAR
           SafeArea(
             child: Column(
               children: [
                 
-                // ===============================================
-                // 2. CABECERA PERSONALIZADA (BOTONES)
-                // ===============================================
+                // --- CABECERA ---
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // --- BOTÓN ATRÁS (IZQUIERDA) ---
+                      // BOTÓN ATRÁS
                       IconButton(
-                        icon: const Icon(Icons.arrow_back_ios_new, size: 24, color: Colors.black87),
+                        // Quitamos color fijo, usamos el del tema o null para automático
+                        icon: const Icon(Icons.arrow_back_ios_new, size: 24), 
                         onPressed: () => Navigator.pop(context),
                       ),
 
-                      // --- BOTONES DE ACCIÓN (DERECHA) ---
+                      // BOTONES DE ACCIÓN
                       Row(
                         children: [
-                          // Compartir
                           IconButton(
-                            icon: const Icon(Icons.share_outlined, color: Colors.black87),
-                            tooltip: 'Compartir letra',
+                            icon: const Icon(Icons.share_outlined),
                             onPressed: () => _compartirHimno(context),
                           ),
                           
-                          // Notas (Solo visual por ahora)
                           IconButton(
-                            icon: const Icon(Icons.edit_note, color: Colors.black87),
-                            tooltip: 'Notas personalizadas',
+                            icon: const Icon(Icons.edit_note),
                             onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("Próximamente: Notas personales"))
-                              );
+                               ScaffoldMessenger.of(context).showSnackBar(
+                                 const SnackBar(content: Text("Próximamente..."))
+                               );
                             },
                           ),
 
@@ -89,7 +93,10 @@ class DetalleScreen extends StatelessWidget {
                           IconButton(
                              icon: Icon(
                                Icons.music_note, 
-                               color: uiProvider.mostrarAcordes ? Colors.orange[800] : Colors.grey
+                               // Ajustamos color inactivo según el tema
+                               color: uiProvider.mostrarAcordes 
+                                  ? Colors.orange[800] 
+                                  : (esOscuro ? Colors.white38 : Colors.grey)
                              ),
                              onPressed: () => context.read<UiProvider>().toggleAcordes(),
                           ),
@@ -98,7 +105,7 @@ class DetalleScreen extends StatelessWidget {
                           IconButton(
                             icon: Icon(
                               esFavorito ? Icons.star : Icons.star_border,
-                              color: esFavorito ? Colors.red[400] : Colors.black87,
+                              color: esFavorito ? Colors.red[400] : null, // Si es null, usa el color del tema (blanco/negro)
                               size: 28,
                             ),
                             onPressed: () {
@@ -111,9 +118,7 @@ class DetalleScreen extends StatelessWidget {
                   ),
                 ),
 
-                // ===============================================
-                // 3. CONTENIDO CON SCROLL (EXPANDED)
-                // ===============================================
+                // --- CONTENIDO ---
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -122,7 +127,7 @@ class DetalleScreen extends StatelessWidget {
                       children: [
                         const SizedBox(height: 30),
                         
-                        // TÍTULO GRANDE (El único título visible)
+                        // TÍTULO
                         Text(
                           "${himno.numero}. ${himno.titulo}",
                           textAlign: TextAlign.center,
@@ -130,7 +135,7 @@ class DetalleScreen extends StatelessWidget {
                             fontFamily: uiProvider.fuenteActual,
                             fontSize: 26.0,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            // NO ponemos color fijo, heredará blanco o negro del tema
                             height: 1.2,
                           ),
                         ),
@@ -143,10 +148,10 @@ class DetalleScreen extends StatelessWidget {
                             margin: const EdgeInsets.only(bottom: 20),
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: colorFondoAcordes, // Usamos la variable dinámica
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(color: Colors.orange.withOpacity(0.5)),
-                              boxShadow: [
+                              boxShadow: esOscuro ? [] : [ // Sin sombra en modo oscuro
                                 BoxShadow(
                                   color: Colors.orange.withOpacity(0.1),
                                   blurRadius: 5,
@@ -157,15 +162,15 @@ class DetalleScreen extends StatelessWidget {
                             child: Text(
                               "♫  ${himno.acordes}",
                               textAlign: TextAlign.center,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.brown,
+                                color: colorTextoAcordes, // Color naranja/marrón
                               ),
                             ),
                           ),
 
-                        // LETRA (TEXTO NORMAL, NO MARKDOWN)
+                        // LETRA DEL HIMNO
                         Text(
                           himno.letra,
                           textAlign: TextAlign.center,
@@ -173,17 +178,17 @@ class DetalleScreen extends StatelessWidget {
                             fontFamily: uiProvider.fuenteActual,
                             fontSize: uiProvider.tamanoLetra,
                             height: 1.6,
-                            color: Colors.black87,
+                            // Color dinámico o null para que use el por defecto
+                            color: colorTextoPrincipal, 
                           ),
                         ),
                         
                         const SizedBox(height: 40),
 
-                        // --- BOTONES ANTERIOR / SIGUIENTE ---
+                        // BOTONES NAVEGACIÓN
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            // ANTERIOR
                             if (hayAnterior)
                               ElevatedButton.icon(
                                 onPressed: () {
@@ -192,36 +197,36 @@ class DetalleScreen extends StatelessWidget {
                                     context,
                                     PageRouteBuilder(
                                       pageBuilder: (_, __, ___) => DetalleScreen(himno: anterior),
-                                      transitionDuration: Duration.zero, // Transición instantánea
+                                      transitionDuration: Duration.zero,
                                     ),
                                   );
                                 },
                                 icon: const Icon(Icons.arrow_back_ios, size: 16),
                                 label: const Text("Anterior"),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFA96565),
+                                  // Color rojo oscuro, se ve bien en ambos temas
+                                  backgroundColor: const Color(0xFFA96565), 
                                   foregroundColor: Colors.white,
                                 ),
                               )
                             else
-                              const SizedBox(width: 100), // Espacio vacío
+                              const SizedBox(width: 100),
 
-                            // SIGUIENTE
                             if (haySiguiente)
-                              Directionality( // Truco para poner icono a la derecha
+                              Directionality(
                                 textDirection: TextDirection.rtl,
                                 child: ElevatedButton.icon(
                                   onPressed: () {
-                                    final siguiente = listaActual[indiceActual + 1];
-                                    Navigator.pushReplacement(
-                                      context,
-                                      PageRouteBuilder(
-                                        pageBuilder: (_, __, ___) => DetalleScreen(himno: siguiente),
-                                        transitionDuration: Duration.zero,
-                                      ),
-                                    );
+                                     final siguiente = listaActual[indiceActual + 1];
+                                     Navigator.pushReplacement(
+                                       context,
+                                       PageRouteBuilder(
+                                         pageBuilder: (_, __, ___) => DetalleScreen(himno: siguiente),
+                                         transitionDuration: Duration.zero,
+                                       ),
+                                     );
                                   },
-                                  icon: const Icon(Icons.arrow_back_ios, size: 16), // La flecha apunta a la izq en RTL, parece derecha
+                                  icon: const Icon(Icons.arrow_back_ios, size: 16),
                                   label: const Text("Siguiente"),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFFA96565),
@@ -233,8 +238,6 @@ class DetalleScreen extends StatelessWidget {
                               const SizedBox(width: 100),
                           ],
                         ),
-
-                        // Espacio extra para que la barra flotante no tape el texto final
                         const SizedBox(height: 120),
                       ],
                     ),
@@ -244,13 +247,9 @@ class DetalleScreen extends StatelessWidget {
             ),
           ),
 
-          // ===============================================
-          // 4. BARRA FLOTANTE (FONT CONTROLS) - SIN CAMBIOS
-          // ===============================================
+          // BARRA FLOTANTE (Sin cambios necesarios, el rojo funciona en ambos)
           Positioned(
-            bottom: 30,
-            left: 20,
-            right: 20,
+            bottom: 30, left: 20, right: 20,
             child: Center(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),

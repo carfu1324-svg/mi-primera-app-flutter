@@ -27,6 +27,19 @@ class HimnosProvider extends ChangeNotifier {
   List<String> get categorias => _categorias;
   String get categoriaSeleccionada => _categoriaSeleccionada;
 
+  List<Himno> get listaParaNavegacion {
+    if (_categoriaSeleccionada == "Todos") {
+      return _himnosOriginales;
+    } 
+    else if (_categoriaSeleccionada == "Favoritos") {
+      return _himnosOriginales
+          .where((h) => _idsFavoritos.contains(h.id))
+          .toList();
+    }
+    // Si es una categoría específica (ej. "Verdes")
+    return _himnosOriginales.where((h) => h.categoria == _categoriaSeleccionada).toList();
+  }
+
   HimnosProvider() {
     log("Inicializando Provider Híbrido...", name: 'HimnosProvider');
     cargarDatosHibridos();

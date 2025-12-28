@@ -6,7 +6,7 @@ class UiProvider extends ChangeNotifier {
   double _tamanoLetra = 18.0;
   bool _mostrarAcordes = false;
   int _indiceFuente = 0;
-  bool _modoOscuro = false;
+  bool _modoOscuro = true;
   final List<String> _listaFuentes = ['Lato', 'Merriweather', 'Dancing Script'];
 
   // Getters

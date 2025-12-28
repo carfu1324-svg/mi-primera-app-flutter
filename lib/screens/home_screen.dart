@@ -12,8 +12,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Controlador para saber qué está escribiendo el usuario y resaltar el texto
   final TextEditingController _searchController = TextEditingController();
+  
+  // Variable local para controlar el ordenamiento
+  bool _ordenAlfabetico = false; 
 
   Color _obtenerColorCategoria(String categoria) {
     final cat = categoria.toLowerCase();
@@ -24,17 +26,13 @@ class _HomeScreenState extends State<HomeScreen> {
     return Colors.indigo;
   }
 
-  // FUNCIÓN MAGICA: Extrae un pedacito de la letra donde aparece la búsqueda
   String? _obtenerFragmentoCoincidencia(String letra, String busqueda) {
     if (busqueda.isEmpty) return null;
-    
     final letraLower = letra.toLowerCase();
     final busquedaLower = busqueda.toLowerCase();
-    
     final index = letraLower.indexOf(busquedaLower);
-    if (index == -1) return null; // No encontró nada en la letra (quizás fue por título)
+    if (index == -1) return null; 
 
-    // Calculamos inicio y fin para mostrar un texto cortito (ej: 30 letras antes y después)
     final inicio = (index - 20).clamp(0, letra.length);
     final fin = (index + busqueda.length + 40).clamp(0, letra.length);
 
@@ -46,7 +44,20 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final himnosProvider = context.watch<HimnosProvider>();
     final uiProvider = context.watch<UiProvider>();
-    final textoBusqueda = _searchController.text; // Lo que el usuario escribió
+    final textoBusqueda = _searchController.text;
+
+    // 1. DETECTAR MODO OSCURO (Usamos tu variable del provider)
+    final esOscuro = uiProvider.modoOscuro;
+
+    // 2. PREPARAR LA LISTA (LÓGICA DE ORDENAMIENTO)
+    // Creamos una copia de la lista para no alterar la original del provider
+    var listaA_Mostrar = List.of(himnosProvider.himnos);
+    
+    if (_ordenAlfabetico) {
+      // Si el botón está activo, ordenamos por Título (A-Z)
+      listaA_Mostrar.sort((a, b) => a.titulo.compareTo(b.titulo));
+    }
+    // Si no está activo, se muestra tal cual viene del provider (usualmente por número)
 
     return Scaffold(
       appBar: AppBar(
@@ -56,24 +67,28 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.refresh),
             tooltip: "Actualizar lista",
             onPressed: () async {
-              // Muestra un mensajito abajo (SnackBar)
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text("Actualizando himnos...")),
               );
-              
-              // Llama al provider
               await context.read<HimnosProvider>().recargarLista();
+
+              // --- AGREGA ESTA LÍNEA ---
+              // Esto vuelve a filtrar la lista nueva con el texto que ya tenías escrito
+              if (context.mounted) {
+                 context.read<HimnosProvider>().buscar(_searchController.text); 
+              }
+              // -------------------------
               
-              // Oculta el mensaje o muestra éxito
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("¡Lista actualizada!")),
-              );
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("¡Lista actualizada!")),
+                );
+              }
             },
           ),
-          // BOTÓN MODO OSCURO
           IconButton(
             icon: Icon(
-              uiProvider.modoOscuro ? Icons.light_mode : Icons.dark_mode,
+              esOscuro ? Icons.light_mode : Icons.dark_mode,
             ),
             tooltip: 'Cambiar Tema',
             onPressed: () {
@@ -85,82 +100,144 @@ class _HomeScreenState extends State<HomeScreen> {
       
       body: Column(
         children: [
-          // 1. BARRA DE BÚSQUEDA
+          // ======================================================
+          // 1. BARRA DE BÚSQUEDA (MEJORADA PARA MODO OSCURO)
+          // ======================================================
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 5),
             child: TextField(
-              controller: _searchController, // Conectamos el controlador
+              controller: _searchController,
+              style: TextStyle(
+                // Color del texto que escribes
+                color: esOscuro ? Colors.white : Colors.black, 
+              ),
               decoration: InputDecoration(
                 hintText: 'Buscar título, número o letra...',
-                prefixIcon: const Icon(Icons.search),
+                // Color del Hint Text (ahora se verá bien en ambos modos)
+                hintStyle: TextStyle(
+                  color: esOscuro ? Colors.white60 : Colors.black54
+                ),
+                prefixIcon: Icon(
+                  Icons.search, 
+                  color: esOscuro ? Colors.white70 : Colors.grey
+                ),
                 suffixIcon: textoBusqueda.isNotEmpty 
-                  ? IconButton( // Botón X para borrar rápido
-                      icon: const Icon(Icons.clear),
+                  ? IconButton(
+                      icon: Icon(Icons.clear, color: esOscuro ? Colors.white70 : Colors.grey),
                       onPressed: () {
                         _searchController.clear();
                         context.read<HimnosProvider>().buscar("");
-                        setState(() {}); // Actualizar para quitar la X
+                        setState(() {}); 
                       },
                     ) 
                   : null,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 filled: true,
-                fillColor: Color(0xFFE8D5D5), //Color de Fondo Barra de busqueda
+                // Color de Fondo: Gris oscuro si es DarkMode, Rosado claro si es LightMode
+                fillColor: esOscuro ? Colors.grey[800] : const Color(0xFFE8D5D5),
                 contentPadding: const EdgeInsets.symmetric(vertical: 0),
               ),
               onChanged: (texto) {
                 context.read<HimnosProvider>().buscar(texto);
-                setState(() {}); // Actualizamos la pantalla para que el fragmento reaccione
+                setState(() {}); 
               },
             ),
           ),
 
-          // 2. BARRA DE FILTROS (CHIPS)
+          // ======================================================
+          // 2. BARRA DE FILTROS (BOTÓN ESTÁTICO + LISTA)
+          // ======================================================
           Container(
             height: 50,
             padding: const EdgeInsets.symmetric(vertical: 5),
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              itemCount: himnosProvider.categorias.length,
-              itemBuilder: (context, index) {
-                final categoria = himnosProvider.categorias[index];
-                final estaSeleccionada = himnosProvider.categoriaSeleccionada == categoria;
-                
-                Color colorChip;
-                if (categoria == "Todos") {
-                  colorChip = Color(0xFFA96565);
-                } else {
-                  colorChip = _obtenerColorCategoria(categoria);
-                }
-
-                return Padding(
+            margin: const EdgeInsets.symmetric(horizontal: 10),
+            child: Row(
+              children: [
+                // --- A. BOTÓN ESTÁTICO (ORDENAR A-Z) ---
+                Padding(
                   padding: const EdgeInsets.only(right: 8.0),
-                  child: ChoiceChip(
-                    label: Text(categoria),
-                    selected: estaSeleccionada,
-                    onSelected: (bool selected) {
-                      if (selected) {
-                        context.read<HimnosProvider>().seleccionarCategoria(categoria);
-                        // Limpiamos búsqueda al cambiar categoría para evitar confusiones
-                        _searchController.clear(); 
-                        context.read<HimnosProvider>().buscar("");
-                      }
-                    },
-                    selectedColor: colorChip,
+                  child: FilterChip(
+                    label: const Text("ABC"),
+                    tooltip: "Ordenar alfabéticamente",
+                    selected: _ordenAlfabetico,
+                    showCheckmark: false,
+                    // Colores personalizados para cuando está activo/inactivo
+                    selectedColor: Colors.orangeAccent,
+                    backgroundColor: esOscuro ? Colors.grey[800] : Colors.grey[300],
                     labelStyle: TextStyle(
-                      color: estaSeleccionada ? Colors.white : Colors.black87,
-                      fontWeight: estaSeleccionada ? FontWeight.bold : FontWeight.normal,
+                      color: _ordenAlfabetico 
+                          ? Colors.black 
+                          : (esOscuro ? Colors.white : Colors.black87),
+                      fontWeight: FontWeight.bold,
                     ),
-                    backgroundColor: Colors.grey[200],
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
-                      side: const BorderSide(color: Colors.transparent),
+                      side: BorderSide(
+                        color: _ordenAlfabetico ? Colors.orange : Colors.transparent
+                      )
                     ),
-                    showCheckmark: false,
+                    onSelected: (val) {
+                      setState(() {
+                        _ordenAlfabetico = val;
+                      });
+                    },
                   ),
-                );
-              },
+                ),
+
+                // --- B. DIVISOR VISUAL ---
+                Container(
+                  width: 1, 
+                  height: 30, 
+                  color: Colors.grey.withOpacity(0.5),
+                  margin: const EdgeInsets.only(right: 8),
+                ),
+
+                // --- C. LISTA DE CATEGORÍAS (SCROLLABLE) ---
+                Expanded(
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: himnosProvider.categorias.length,
+                    itemBuilder: (context, index) {
+                      final categoria = himnosProvider.categorias[index];
+                      final estaSeleccionada = himnosProvider.categoriaSeleccionada == categoria;
+                      
+                      Color colorChip;
+                      if (categoria == "Todos") {
+                        colorChip = const Color(0xFFA96565);
+                      } else {
+                        colorChip = _obtenerColorCategoria(categoria);
+                      }
+
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: ChoiceChip(
+                          label: Text(categoria),
+                          selected: estaSeleccionada,
+                          onSelected: (bool selected) {
+                            if (selected) {
+                              context.read<HimnosProvider>().seleccionarCategoria(categoria);
+                              _searchController.clear(); 
+                              context.read<HimnosProvider>().buscar("");
+                            }
+                          },
+                          selectedColor: colorChip,
+                          labelStyle: TextStyle(
+                            color: estaSeleccionada ? Colors.white : (esOscuro ? Colors.white : Colors.black87),
+                            fontWeight: estaSeleccionada ? FontWeight.bold : FontWeight.normal,
+                          ),
+                          // Fondo del chip inactivo según el tema
+                          backgroundColor: esOscuro ? Colors.grey[800] : Colors.grey[200],
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            side: const BorderSide(color: Colors.transparent),
+                          ),
+                          showCheckmark: false,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
 
@@ -168,7 +245,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: himnosProvider.cargando
                 ? const Center(child: CircularProgressIndicator())
-                : himnosProvider.himnos.isEmpty 
+                : listaA_Mostrar.isEmpty  // <--- USAMOS listaA_Mostrar EN VEZ DE himnosProvider.himnos
                   ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -180,20 +257,17 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     )
                   : ListView.builder(
-                      itemCount: himnosProvider.himnos.length,
+                      itemCount: listaA_Mostrar.length, // <--- USAMOS listaA_Mostrar
                       itemBuilder: (context, index) {
-                        final himno = himnosProvider.himnos[index];
+                        final himno = listaA_Mostrar[index]; // <--- USAMOS listaA_Mostrar
                         
-                        // LÓGICA VISUAL: ¿Mostramos categoría o fragmento de letra?
-                        // Si hay búsqueda y la letra contiene el texto, mostramos el fragmento.
-                        // Si no, mostramos la categoría normal.
                         String subtitulo = himno.categoria;
                         bool esCoincidenciaLetra = false;
 
                         if (textoBusqueda.isNotEmpty) {
                            final fragmento = _obtenerFragmentoCoincidencia(himno.letra, textoBusqueda);
                            if (fragmento != null) {
-                             subtitulo = fragmento; // Reemplazamos "Verdes" por "...atribuimos la..."
+                             subtitulo = fragmento;
                              esCoincidenciaLetra = true;
                            }
                         }
@@ -211,7 +285,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             himno.titulo, 
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: uiProvider.tamanoLetra - 2, 
+                              fontSize: uiProvider.tamanoLetra - 2,
+                              // Color del título dinámico
+                              color: esOscuro ? Colors.white : Colors.black87,
                             )
                           ),
                           subtitle: Text(
@@ -219,9 +295,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              // Si es un fragmento de letra, lo ponemos en cursiva y gris oscuro
                               fontStyle: esCoincidenciaLetra ? FontStyle.italic : FontStyle.normal,
-                              color: esCoincidenciaLetra ? Colors.black87 : Colors.grey,
+                              // Color del subtítulo (fragmento o categoría)
+                              color: esCoincidenciaLetra 
+                                ? (esOscuro ? Colors.white70 : Colors.black87) 
+                                : Colors.grey,
                             ),
                           ),
                           trailing: const Icon(Icons.chevron_right),
