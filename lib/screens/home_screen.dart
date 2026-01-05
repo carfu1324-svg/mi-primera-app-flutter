@@ -61,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Himnario'),
+        title: const Text('Cancionero'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
