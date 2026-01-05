@@ -6,6 +6,8 @@ class Himno {
   final String categoria;   // "Libro Rojo", "Libro Verde", "Especial"
   final String? acordes;    // (Opcional) Las notas para los músicos
   bool esFavorito;          // Estado para el corazón (se guarda localmente)
+  final String? audioUrl;
+  final String? letraAcordes;   // url de musica
 
   Himno({
     required this.id,
@@ -15,6 +17,8 @@ class Himno {
     required this.categoria,
     this.acordes,
     this.esFavorito = false,
+    this.audioUrl,
+    this.letraAcordes,
   });
 
   factory Himno.fromJson(Map<String, dynamic> json){
@@ -26,6 +30,8 @@ class Himno {
       categoria: json['categoria'],
       acordes: json['acordes'],
       esFavorito: false,
+      audioUrl: json['audioUrl'],
+      letraAcordes: json['letra_acordes'],
     );
   }
 }

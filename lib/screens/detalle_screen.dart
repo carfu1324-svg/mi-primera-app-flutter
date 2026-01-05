@@ -1,26 +1,96 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
+import 'package:audioplayers/audioplayers.dart'; 
+
 import '../models/himno.dart';
 import '../providers/ui_provider.dart';
 import '../providers/himnos_provider.dart';
-import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 
-class DetalleScreen extends StatelessWidget {
+class DetalleScreen extends StatefulWidget {
   final Himno himno;
 
   const DetalleScreen({super.key, required this.himno});
 
+  @override
+  State<DetalleScreen> createState() => _DetalleScreenState();
+}
+
+class _DetalleScreenState extends State<DetalleScreen> {
+  // CONTROLADOR DE AUDIO
+  late AudioPlayer _player;
+  bool _reproduciendo = false;
+  bool _cargandoAudio = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _player = AudioPlayer();
+
+    // Escuchar cambios de estado (Play/Pause)
+    _player.onPlayerStateChanged.listen((state) {
+      if (mounted) {
+        setState(() {
+          _reproduciendo = (state == PlayerState.playing);
+        });
+      }
+    });
+
+    // Escuchar cuando termina la canción
+    _player.onPlayerComplete.listen((event) {
+      if (mounted) {
+        setState(() {
+          _reproduciendo = false;
+          _player.stop(); 
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    // IMPORTANTE: Detener y limpiar el audio al salir
+    _player.dispose();
+    super.dispose();
+  }
+
+  // FUNCIÓN PARA REPRODUCIR/PAUSAR SEGURA
+  Future<void> _toggleAudio() async {
+    if (widget.himno.audioUrl == null || widget.himno.audioUrl!.isEmpty) return;
+
+    try {
+      if (_reproduciendo) {
+        await _player.pause();
+      } else {
+        setState(() => _cargandoAudio = true);
+        
+        await _player.play(UrlSource(widget.himno.audioUrl!));
+        
+        if (mounted) {
+          setState(() => _cargandoAudio = false);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _cargandoAudio = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("No se pudo reproducir el audio")),
+        );
+      }
+    }
+  }
+
   void _compartirHimno(BuildContext context) {
     final String textoACompartir = 
-        "🎵 *${himno.numero}. ${himno.titulo}*\n\n"
-        "${himno.letra}\n\n"
+        "🎵 *${widget.himno.numero}. ${widget.himno.titulo}*\n\n"
+        "${widget.himno.letra}\n\n"
         "_Enviado desde mi App de Himnario_";
 
     final box = context.findRenderObject() as RenderBox?;
     Share.share(
       textoACompartir,
-      subject: "Himno: ${himno.titulo}",
+      subject: "Himno: ${widget.himno.titulo}",
       sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
     );
   }
@@ -29,40 +99,43 @@ class DetalleScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final uiProvider = context.watch<UiProvider>();
     final himnosProvider = context.watch<HimnosProvider>(); 
-
-    // Detectamos tema oscuro/claro
     final esOscuro = Theme.of(context).brightness == Brightness.dark;
 
-    // Colores dinámicos
     final colorFondoAcordes = esOscuro ? Colors.grey[850] : Colors.white;
     final colorTextoAcordes = esOscuro ? Colors.orangeAccent : Colors.brown;
     final colorTextoPrincipal = Theme.of(context).textTheme.bodyLarge?.color;
 
-    // Lógica de navegación (usa la lista completa, no la filtrada)
     final listaActual = himnosProvider.listaParaNavegacion;
-    final indiceActual = listaActual.indexOf(himno);
-    final esFavorito = himnosProvider.esFavorito(himno.id);
+    final indiceActual = listaActual.indexOf(widget.himno);
+    final esFavorito = himnosProvider.esFavorito(widget.himno.id);
     final haySiguiente = indiceActual < listaActual.length - 1;
     final hayAnterior = indiceActual > 0;
 
+    // --- LÓGICA INTELIGENTE DE VISUALIZACIÓN ---
+    
+    // 1. ¿Existe realmente una letra especial con acordes?
+    bool existeLetraConAcordes = widget.himno.letraAcordes != null && widget.himno.letraAcordes!.trim().isNotEmpty;
+    
+    // 2. ¿Debemos mostrar el modo acordes? (Solo si el usuario quiere Y existe la data)
+    bool modoAcordesActivo = uiProvider.mostrarAcordes && existeLetraConAcordes;
+
+    // 3. ¿Debemos mostrar la cajita de "Resumen"? (Si el usuario quiere acordes, pero solo tenemos los básicos, no la letra completa)
+    bool mostrarResumenAcordes = uiProvider.mostrarAcordes && (widget.himno.acordes != null && !existeLetraConAcordes);
+
     return Scaffold(
-      // CUERPO DE LA PANTALLA (SOLO TEXTO)
       body: SafeArea(
         child: Column(
           children: [
-            // --- 1. CABECERA SUPERIOR ---
+            // --- 1. CABECERA ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Botón Atrás
                   IconButton(
                     icon: const Icon(Icons.arrow_back_ios_new, size: 24), 
                     onPressed: () => Navigator.pop(context),
                   ),
-
-                  // Botones de Acción (Compartir, Notas, Favorito)
                   Row(
                     children: [
                       IconButton(
@@ -80,6 +153,7 @@ class DetalleScreen extends StatelessWidget {
                       IconButton(
                          icon: Icon(
                            Icons.music_note, 
+                           // El color indica si el botón está "presionado", aunque no haya acordes
                            color: uiProvider.mostrarAcordes 
                               ? Colors.orange[800] 
                               : (esOscuro ? Colors.white38 : Colors.grey)
@@ -93,7 +167,7 @@ class DetalleScreen extends StatelessWidget {
                           size: 28,
                         ),
                         onPressed: () {
-                          context.read<HimnosProvider>().toggleFavorito(himno.id);
+                          context.read<HimnosProvider>().toggleFavorito(widget.himno.id);
                         },
                       ),
                     ],
@@ -102,7 +176,7 @@ class DetalleScreen extends StatelessWidget {
               ),
             ),
 
-            // --- 2. CONTENIDO (TITULO Y LETRA) ---
+            // --- 2. CONTENIDO ---
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -110,10 +184,8 @@ class DetalleScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const SizedBox(height: 30),
-                    
-                    // TÍTULO
                     Text(
-                      "${himno.numero}. ${himno.titulo}",
+                      "${widget.himno.numero}. ${widget.himno.titulo}",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: uiProvider.fuenteActual,
@@ -122,28 +194,21 @@ class DetalleScreen extends StatelessWidget {
                         height: 1.2,
                       ),
                     ),
-                    
                     const SizedBox(height: 50),
 
-                    // CAJA DE ACORDES
-                    if (uiProvider.mostrarAcordes && himno.acordes != null)
+                    // --- CAJA DE RESUMEN DE ACORDES (Solo informativo) ---
+                    if (mostrarResumenAcordes)
                       Container(
                         margin: const EdgeInsets.only(bottom: 20),
                         padding: const EdgeInsets.all(12),
+                        width: double.infinity,
                         decoration: BoxDecoration(
                           color: colorFondoAcordes,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: Colors.orange.withOpacity(0.5)),
-                          boxShadow: esOscuro ? [] : [
-                            BoxShadow(
-                              color: Colors.orange.withOpacity(0.1),
-                              blurRadius: 5,
-                              offset: const Offset(0, 2),
-                            )
-                          ]
                         ),
                         child: Text(
-                          "♫  ${himno.acordes}",
+                          "♫  Tonalidad sugerida: ${widget.himno.acordes}",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 16,
@@ -152,40 +217,30 @@ class DetalleScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-
-                    // LETRA DEL HIMNO
-                    /*Text(
-                      himno.letra,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: uiProvider.fuenteActual,
-                        fontSize: uiProvider.tamanoLetra,
-                        height: 1.6,
-                        color: colorTextoPrincipal, 
-                      ),
-                    ),
-                    */
                     
-                    HtmlWidget( // Ahora entiende <b>, <i> y <br>
-
-                      //himno.letra.replaceAll('\n', '<br>'),
-                      '<div style="text-align: center">${himno.letra.replaceAll('\n', '<br>')}</div>',
+                    // --- WIDGET DE LA LETRA ---
+                    HtmlWidget(
+                      // HTML: Si el modo acordes está activo Y existen, usa <pre>, sino usa letra normal
+                      modoAcordesActivo
+                          ? '<pre style="text-align: left; overflow-x: auto; margin: 0; padding: 0;">${widget.himno.letraAcordes}</pre>'
+                          : '<div style="text-align: center">${widget.himno.letra.replaceAll('\n', '<br>')}</div>',
                       
-                      // Estilos globales (Fuente, Color, Tamaño)
                       textStyle: TextStyle(
-                        fontFamily: uiProvider.fuenteActual,
-                        fontSize: uiProvider.tamanoLetra,
-                        height: 1.6,
+                        // FUENTE: Monospace para acordes, Fuente elegida para normal
+                        fontFamily: modoAcordesActivo ? 'monospace' : uiProvider.fuenteActual,
+                        
+                        // TAMAÑO: Se reduce si hay acordes para que quepa en pantalla
+                        fontSize: modoAcordesActivo 
+                            ? (uiProvider.tamanoLetra > 14 ? uiProvider.tamanoLetra - 5 : 10) 
+                            : uiProvider.tamanoLetra,
+                        
+                        // ESPACIADO: Pegadito para acordes, amplio para lectura
+                        height: modoAcordesActivo ? 1.5 : 1.8, 
                         color: colorTextoPrincipal, 
                       ),
-
-                      // Truco para centrar el texto HTML
-                      customStylesBuilder: (element) {
-                        return {'text-align': 'center'};
-                      },
+                      renderMode: RenderMode.column, 
                     ),
 
-                    // Espacio final para que el texto no choque con la barra de abajo
                     const SizedBox(height: 40),
                   ],
                 ),
@@ -195,7 +250,7 @@ class DetalleScreen extends StatelessWidget {
         ),
       ),
 
-      // --- 3. BARRA INFERIOR DE CONTROLES (FIJA) ---
+      // --- 3. BARRA INFERIOR CON REPRODUCTOR INTEGRADO ---
       bottomNavigationBar: Container(
         color: esOscuro ? Colors.grey[900] : Colors.white,
         child: SafeArea(
@@ -209,14 +264,13 @@ class DetalleScreen extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                
-                // BOTÓN ANTERIOR (IZQUIERDA)
+                // BOTÓN ANTERIOR
                 if (hayAnterior)
                   IconButton(
                     icon: const Icon(Icons.arrow_back_ios_new),
                     color: const Color(0xFFA96565),
-                    tooltip: "Himno anterior",
                     onPressed: () {
+                      _player.stop(); // Detener audio al cambiar
                       final anterior = listaActual[indiceActual - 1];
                       Navigator.pushReplacement(
                         context,
@@ -228,11 +282,11 @@ class DetalleScreen extends StatelessWidget {
                     },
                   )
                 else
-                  const SizedBox(width: 48), // Espacio para mantener centro
+                  const SizedBox(width: 48),
 
-                // CONTROLES DE FUENTE (CENTRO - PÍLDORA ROJA)
+                // --- PASTILLA CENTRAL (AUDIO + CONFIG) ---
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
                     color: const Color(0xFFA96565),
                     borderRadius: BorderRadius.circular(50),
@@ -240,6 +294,45 @@ class DetalleScreen extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      
+                      // 1. REPRODUCTOR DE AUDIO (SIEMPRE VISIBLE)
+                      // Definimos si tiene audio o no
+                      Builder(
+                        builder: (context) {
+                          bool tieneAudio = widget.himno.audioUrl != null && widget.himno.audioUrl!.isNotEmpty;
+                          
+                          return Row(
+                            children: [
+                              _cargandoAudio
+                                ? const SizedBox(
+                                    width: 20, 
+                                    height: 20, 
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                                  )
+                                : IconButton(
+                                    icon: Icon(_reproduciendo ? Icons.pause : Icons.play_arrow),
+                                    iconSize: 24,
+                                    // Si NO tiene audio, ponemos null (esto deshabilita el botón)
+                                    onPressed: tieneAudio ? _toggleAudio : null,
+                                    // Si NO tiene audio, se ve medio transparente
+                                    color: tieneAudio ? Colors.white : Colors.white.withOpacity(0.3),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                  ),
+                              
+                              // Separador
+                              Container(
+                                margin: const EdgeInsets.symmetric(horizontal: 10),
+                                width: 1,
+                                height: 20,
+                                color: Colors.white.withOpacity(0.4),
+                              ),
+                            ],
+                          );
+                        }
+                      ),
+
+                      // 2. CONFIGURACIÓN DE TEXTO
                       IconButton(
                         icon: const Icon(Icons.font_download, color: Colors.white, size: 20),
                         onPressed: () => context.read<UiProvider>().cambiarFuente(),
@@ -253,13 +346,16 @@ class DetalleScreen extends StatelessWidget {
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      
+                      SizedBox(
+                        width: 30,
                         child: Text(
                           "${uiProvider.tamanoLetra.toInt()}",
+                          textAlign: TextAlign.center,
                           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                       ),
+                      
                       IconButton(
                         icon: const Icon(Icons.add, color: Colors.white, size: 20),
                         onPressed: () => context.read<UiProvider>().aumentarLetra(),
@@ -270,13 +366,13 @@ class DetalleScreen extends StatelessWidget {
                   ),
                 ),
 
-                // BOTÓN SIGUIENTE (DERECHA)
+                // BOTÓN SIGUIENTE
                 if (haySiguiente)
                   IconButton(
                     icon: const Icon(Icons.arrow_forward_ios),
                     color: const Color(0xFFA96565),
-                    tooltip: "Himno siguiente",
                     onPressed: () {
+                      _player.stop(); // Detener audio al cambiar
                       final siguiente = listaActual[indiceActual + 1];
                       Navigator.pushReplacement(
                         context,
@@ -288,7 +384,7 @@ class DetalleScreen extends StatelessWidget {
                     },
                   )
                 else
-                  const SizedBox(width: 48), // Espacio para mantener centro
+                  const SizedBox(width: 48),
               ],
             ),
           ),
